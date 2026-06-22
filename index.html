@@ -28,10 +28,12 @@
       --SecondaryColor-Blue60: #019bf0;
       --gray-50: #f8fafc;
       --gray-100: #f1f5f9;
-      --gray-200: #e2e8f0;
       --gray-400: #94a3b8;
       --Gray-gray-700: #4A5568;
       --gray-700: #334155;
+      --SecondaryGray-LightStroke-SecondaryGray20: #F0F0F0;
+      --SecondaryGray-SecondaryText-SecondaryGray80: #767676;
+      --Gray-gray-700: #4A5568;
       --PrimaryTextColor-PrimaryText90: #4c525c;
       --white: #ffffff;
       --radius-sm: 6px;
@@ -56,6 +58,15 @@
     <p class="hero-eyebrow">Buyer's Guide</p>
     <h1>Find <span>what's right</span> for you<br>and your family.</h1>
 
+    <!-- <div class="search-wrap">
+      <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+        viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+      </svg>
+      <input type="text" id="searchInput" placeholder="Search guides…" autocomplete="off" />
+    </div> -->
+
     <div class="search-wrap">
       <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
         viewBox="0 0 24 24">
@@ -63,6 +74,7 @@
         <path d="m21 21-4.35-4.35" />
       </svg>
       <input type="text" id="searchInput" placeholder="Search guides…" autocomplete="off" />
+      <div class="search-dropdown" id="searchDropdown"></div>
     </div>
 
     <div class="trust-row">
@@ -157,17 +169,6 @@
         readTime: 5,
         emoji: "❄️",
         popular: true
-      },
-      {
-        id: 2,
-        category: "cooling",
-        categoryLabel: "Cooling",
-        title: "Air Cooler Buyer's Guide",
-        description: "From window units to split type inverters — find out what capacity, energy efficiency, and features matter most.",
-        tags: ["HP", "Inverter vs standard", "Energy Efficiency Rating"],
-        readTime: 5,
-        emoji: "🌬️",
-        popular: false
       },
       {
         id: 3,
@@ -420,19 +421,80 @@
         </span>
         <button class="read-btn">
           Read Guide
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M4.5 12L19.5 12M13.875 18L19.5 12L13.875 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </div>
     </article>
   `).join("");
     }
 
+    // // ── SEARCH ────────────────────────────────────────────────────────────────────
+    // document.getElementById("searchInput").addEventListener("input", e => {
+    //   searchQuery = e.target.value.trim();
+    //   if (searchQuery) activeCategory = "all";
+    //   renderCategories();
+    //   renderGuides();
+    // });
+
+    // // ── INIT ──────────────────────────────────────────────────────────────────────
+    // renderCategories();
+    // renderGuides();
+
     // ── SEARCH ────────────────────────────────────────────────────────────────────
-    document.getElementById("searchInput").addEventListener("input", e => {
+    const searchInput = document.getElementById("searchInput");
+    const searchDropdown = document.getElementById("searchDropdown");
+
+    function renderDropdown(query) {
+      if (!query) {
+        searchDropdown.classList.remove("open");
+        searchDropdown.innerHTML = "";
+        return;
+      }
+
+      const results = guides.filter(g => matchesSearch(g, query)).slice(0, 6);
+
+      if (results.length === 0) {
+        searchDropdown.innerHTML = `<p class="search-no-results">No guides found for "<strong>${query}</strong>"</p>`;
+      } else {
+        searchDropdown.innerHTML = results.map(g => `
+      <a class="search-result-item" href="#guide-${g.id}" data-id="${g.id}">
+        <span class="search-result-title">${g.title}</span>
+        <span class="search-result-desc">${g.description}</span>
+        <div class="search-result-chips">
+          ${g.tags.map(t => `<span class="search-result-chip">${t}</span>`).join("")}
+        </div>
+      </a>
+    `).join("");
+      }
+
+      searchDropdown.classList.add("open");
+    }
+
+    searchInput.addEventListener("input", e => {
       searchQuery = e.target.value.trim();
       if (searchQuery) activeCategory = "all";
       renderCategories();
       renderGuides();
+      renderDropdown(searchQuery);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", e => {
+      if (!document.querySelector(".search-wrap").contains(e.target)) {
+        searchDropdown.classList.remove("open");
+      }
+    });
+
+    // Close dropdown on result click, and scroll to card
+    searchDropdown.addEventListener("click", e => {
+      const item = e.target.closest(".search-result-item");
+      if (!item) return;
+      searchDropdown.classList.remove("open");
+      const id = item.dataset.id;
+      const card = document.querySelector(`[aria-label="${guides.find(g => g.id == id)?.title}"]`);
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
     });
 
     // ── INIT ──────────────────────────────────────────────────────────────────────
